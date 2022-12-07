@@ -6,5 +6,12 @@
   "repository": "git@github.com:wonwoo89/gh-deploy.git",
   "author": "Isaac Lee <isaac@soomgo.com>",
   "license": "MIT",
-  "packageManager": "yarn@3.3.0"
+  "packageManager": "yarn@3.3.0",
+  "dependencies": {
+    "inquirer": "8.2.5",
+    "inquirer-search-list": "^1.2.6"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8"
+  }
 }
