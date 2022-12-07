@@ -5,5 +5,6 @@
   "main": "index.ts",
   "repository": "git@github.com:wonwoo89/gh-deploy.git",
   "author": "Isaac Lee <isaac@soomgo.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "yarn@3.3.0"
 }
