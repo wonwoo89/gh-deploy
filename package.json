@@ -1,0 +1,9 @@
+{
+  "name": "gh-deploy",
+  "version": "1.0.0",
+  "description": "Deploy CLI by Github CLI",
+  "main": "index.ts",
+  "repository": "git@github.com:wonwoo89/gh-deploy.git",
+  "author": "Isaac Lee <isaac@soomgo.com>",
+  "license": "MIT"
+}
