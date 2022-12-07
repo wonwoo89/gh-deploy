@@ -3,6 +3,7 @@
 
 # yarn berry zero install
 .yarn/*
+!.yarn/cache
 !.yarn/plugins
 !.yarn/releases
 
