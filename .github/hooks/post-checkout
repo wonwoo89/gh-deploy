@@ -1,0 +1,20 @@
+#!/bin/zsh
+
+if [[ "$1" != "$2" ]]; then
+    # 체크아웃 후에 브랜치 최신화
+    currentBranch=$(git branch --show-current)
+    diffList=$(git diff "$1"..."$2")
+
+    echo ''
+    echo '>>> Pull current branch commits'
+#   git fetch origin
+    git pull origin "$currentBranch"
+
+    # 패키지 변화가 있다면 설치
+#    if [[ $diffList == *package* ]]; then
+#      echo ''
+#      echo '>>> This branch has changed packages'
+#      npm ci
+#    fi
+fi
+
