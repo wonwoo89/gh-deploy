@@ -1,1 +1,1 @@
-declare module 'types/inquirer-search-list';
+declare module 'inquirer-search-list';

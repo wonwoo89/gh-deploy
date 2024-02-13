@@ -1,7 +1,7 @@
 import { exec, spawnSync } from 'child_process';
 import { promisify } from 'util';
 import inquirer from 'inquirer';
-import inquirerSearchList from 'types/inquirer-search-list';
+import inquirerSearchList from 'inquirer-search-list';
 
 const environmentList = [
   'production',
