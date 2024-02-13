@@ -1,6 +1,7 @@
 import { exec, spawnSync } from 'child_process';
 import { promisify } from 'util';
 import inquirer from 'inquirer';
+import inquirerSearchList from 'types/inquirer-search-list';
 
 const environmentList = [
   'production',
@@ -45,9 +46,16 @@ const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs: {
   });
 };
 
+inquirer.registerPrompt('search-list', inquirerSearchList);
+
 // main
 (async () => {
   const currentBranch = await getBranchName();
+  echo('> 브랜치 목록 최신화 하는 중...');
+  echo();
+  await execute('git fetch origin');
+  const remoteBranch = await getBranchList();
+
   const { environment, version, branch } = await inquirer.prompt<{
     environment: EnvironmentType;
     version?: Version;
@@ -72,14 +80,7 @@ const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs: {
       name: 'branch',
       message: '브랜치를 선택해주세요.(검색 가능)',
       default: currentBranch,
-      choices: (async () => {
-        echo(currentBranch);
-        echo('> 브랜치 목록 최신화 하는 중...');
-        echo();
-        await execute('git fetch origin');
-        const remoteBranch = await getBranchList();
-        return [currentBranch, ...remoteBranch];
-      })(),
+      choices: [currentBranch, ...remoteBranch],
     },
   ]);
 
