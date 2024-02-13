@@ -33,6 +33,10 @@ const getBranchName = async () => {
   const { stdout } = await execute('git branch --show-current');
   return stdout.replace(/\n/gi, '').trim();
 }
+const getBranchList = async () => {
+  const { stdout } = await execute('git branch -r');
+  return stdout.split('\n').map((b) => b.trim().replace('origin/', ''));
+}
 const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs: { [key: string]: string | number }) => {
   echo();
   const inputArray = Object.entries(inputs).flatMap(([key, value]) => ['-f', `${key}=${value}`]);
@@ -68,14 +72,12 @@ const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs: {
       name: 'branch',
       message: '브랜치를 선택해주세요.(검색 가능)',
       default: currentBranch,
-      choices: (() => {
+      choices: (async () => {
         echo(currentBranch);
         echo('> 브랜치 목록 최신화 하는 중...');
         echo();
-        spawnSync('git', ['fetch', 'origin']);
-        const remoteBranch = spawnSync('git', ['branch', '-r'], { encoding: 'utf8' })
-          .stdout.split('\n')
-          .map((b) => b.trim().replace('origin/', ''));
+        await execute('git fetch origin');
+        const remoteBranch = await getBranchList();
         return [currentBranch, ...remoteBranch];
       })(),
     },
