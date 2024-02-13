@@ -1,4 +1,5 @@
-import { spawnSync } from 'child_process';
+import { exec, spawnSync } from 'child_process';
+import { promisify } from 'util';
 import inquirer from 'inquirer';
 
 const environmentList = [
@@ -26,8 +27,13 @@ type Version = (typeof versionList)[number];
 const echo = console.log;
 const green = '\x1b[32m';
 const noColor = '\x1b[0m';
+const execute = promisify(exec);
 const toFirstUpperCase = (str: string) => str.replace(/^\S/, ($1) => $1.toUpperCase());
-const execute = (deploymentTarget: DeploymentType, branch: string, inputs: { [key: string]: string | number }) => {
+const getBranchName = async () => {
+  const { stdout } = await execute('git branch --show-current');
+  return stdout.replace(/\n/gi, '').trim();
+}
+const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs: { [key: string]: string | number }) => {
   echo();
   const inputArray = Object.entries(inputs).flatMap(([key, value]) => ['-f', `${key}=${value}`]);
   return spawnSync('gh', ['workflow', 'run', `Deployment to ${deploymentTarget}`, '--ref', branch, ...inputArray], {
@@ -37,7 +43,7 @@ const execute = (deploymentTarget: DeploymentType, branch: string, inputs: { [ke
 
 // main
 (async () => {
-  const currentBranch = spawnSync('git', ['branch', '--show-current'], { encoding: 'utf8' }).stdout.trim();
+  const currentBranch = await getBranchName();
   const { environment, version, branch } = await inquirer.prompt<{
     environment: EnvironmentType;
     version?: Version;
@@ -77,7 +83,7 @@ const execute = (deploymentTarget: DeploymentType, branch: string, inputs: { [ke
 
   if (environment === 'production') {
     if (version) {
-      execute(DeploymentType.Production, currentBranch, { VERSION: version });
+      runWorkflow(DeploymentType.Production, currentBranch, { VERSION: version });
       echo();
       echo(`> 프로덕션 ${green}${toFirstUpperCase(version)} ${noColor}업데이트를 시작합니다.`);
       echo(`> 배포 브랜치: ${green}${currentBranch}`);
@@ -85,7 +91,7 @@ const execute = (deploymentTarget: DeploymentType, branch: string, inputs: { [ke
     return;
   }
 
-  execute(DeploymentType.Development, currentBranch, { environment });
+  runWorkflow(DeploymentType.Development, currentBranch, { environment });
   echo();
   echo(`> ${green}${toFirstUpperCase(environment)} ${noColor}환경 배포를 시작합니다.`);
   echo(`> 배포 브랜치: ${green}${currentBranch}`);
