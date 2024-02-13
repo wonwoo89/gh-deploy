@@ -238,6 +238,31 @@ var getBranchName = function() {
         return _ref.apply(this, arguments);
     };
 }();
+var getBranchList = function() {
+    var _ref = _async_to_generator(function() {
+        var stdout;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    return [
+                        4,
+                        execute("git branch -r")
+                    ];
+                case 1:
+                    stdout = _state.sent().stdout;
+                    return [
+                        2,
+                        stdout.split("\n").map(function(b) {
+                            return b.trim().replace("origin/", "");
+                        })
+                    ];
+            }
+        });
+    });
+    return function getBranchList() {
+        return _ref.apply(this, arguments);
+    };
+}();
 var runWorkflow = function(deploymentTarget, branch, inputs) {
     echo();
     var inputArray = Object.entries(inputs).flatMap(function(param) {
@@ -294,26 +319,35 @@ _async_to_generator(function() {
                             name: "branch",
                             message: "브랜치를 선택해주세요.(검색 가능)",
                             default: currentBranch,
-                            choices: function() {
-                                echo(currentBranch);
-                                echo("> 브랜치 목록 최신화 하는 중...");
-                                echo();
-                                spawnSync("git", [
-                                    "fetch",
-                                    "origin"
-                                ]);
-                                var remoteBranch = spawnSync("git", [
-                                    "branch",
-                                    "-r"
-                                ], {
-                                    encoding: "utf8"
-                                }).stdout.split("\n").map(function(b) {
-                                    return b.trim().replace("origin/", "");
+                            choices: _async_to_generator(function() {
+                                var remoteBranch;
+                                return _ts_generator(this, function(_state) {
+                                    switch(_state.label){
+                                        case 0:
+                                            echo(currentBranch);
+                                            echo("> 브랜치 목록 최신화 하는 중...");
+                                            echo();
+                                            return [
+                                                4,
+                                                execute("git fetch origin")
+                                            ];
+                                        case 1:
+                                            _state.sent();
+                                            return [
+                                                4,
+                                                getBranchList()
+                                            ];
+                                        case 2:
+                                            remoteBranch = _state.sent();
+                                            return [
+                                                2,
+                                                [
+                                                    currentBranch
+                                                ].concat(_to_consumable_array(remoteBranch))
+                                            ];
+                                    }
                                 });
-                                return [
-                                    currentBranch
-                                ].concat(_to_consumable_array(remoteBranch));
-                            }()
+                            })()
                         }
                     ])
                 ];
