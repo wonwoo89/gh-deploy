@@ -180,7 +180,8 @@ function _ts_generator(thisArg, body) {
         };
     }
 }
-import { spawnSync } from "child_process";
+import { exec, spawnSync } from "child_process";
+import { promisify } from "util";
 import inquirer from "inquirer";
 var environmentList = [
     "production",
@@ -208,12 +209,36 @@ var DeploymentType;
 var echo = console.log;
 var green = "\x1b[32m";
 var noColor = "\x1b[0m";
+var execute = promisify(exec);
 var toFirstUpperCase = function(str) {
     return str.replace(/^\S/, function($1) {
         return $1.toUpperCase();
     });
 };
-var execute = function(deploymentTarget, branch, inputs) {
+var getBranchName = function() {
+    var _ref = _async_to_generator(function() {
+        var stdout;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    return [
+                        4,
+                        execute("git branch --show-current")
+                    ];
+                case 1:
+                    stdout = _state.sent().stdout;
+                    return [
+                        2,
+                        stdout.replace(/\n/gi, "").trim()
+                    ];
+            }
+        });
+    });
+    return function getBranchName() {
+        return _ref.apply(this, arguments);
+    };
+}();
+var runWorkflow = function(deploymentTarget, branch, inputs) {
     echo();
     var inputArray = Object.entries(inputs).flatMap(function(param) {
         var _param = _sliced_to_array(param, 2), key = _param[0], value = _param[1];
@@ -238,12 +263,12 @@ _async_to_generator(function() {
     return _ts_generator(this, function(_state) {
         switch(_state.label){
             case 0:
-                currentBranch = spawnSync("git", [
-                    "branch",
-                    "--show-current"
-                ], {
-                    encoding: "utf8"
-                }).stdout.trim();
+                return [
+                    4,
+                    getBranchName()
+                ];
+            case 1:
+                currentBranch = _state.sent();
                 return [
                     4,
                     inquirer.prompt([
@@ -292,11 +317,11 @@ _async_to_generator(function() {
                         }
                     ])
                 ];
-            case 1:
+            case 2:
                 _ref = _state.sent(), environment = _ref.environment, version = _ref.version, branch = _ref.branch;
                 if (environment === "production") {
                     if (version) {
-                        execute("production", currentBranch, {
+                        runWorkflow("production", currentBranch, {
                             VERSION: version
                         });
                         echo();
@@ -307,7 +332,7 @@ _async_to_generator(function() {
                         2
                     ];
                 }
-                execute("development", currentBranch, {
+                runWorkflow("development", currentBranch, {
                     environment: environment
                 });
                 echo();
