@@ -3,7 +3,7 @@ name: Build Actions
 on:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   action-build:
