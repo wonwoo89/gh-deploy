@@ -13,8 +13,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
+        id: nvm
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.nvm.outputs.NVMRC }}
 
       - uses: pnpm/action-setup@v3
         name: Install pnpm
