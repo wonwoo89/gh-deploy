@@ -86,17 +86,17 @@ inquirer.registerPrompt('search-list', inquirerSearchList);
 
   if (environment === 'production') {
     if (version) {
-      runWorkflow(DeploymentType.Production, currentBranch, { VERSION: version });
+      runWorkflow(DeploymentType.Production, branch, { VERSION: version });
       echo();
       echo(`> 프로덕션 ${green}${toFirstUpperCase(version)} ${noColor}업데이트를 시작합니다.`);
-      echo(`> 배포 브랜치: ${green}${currentBranch}`);
+      echo(`> 배포 브랜치: ${green}${branch}`);
     }
     return;
   }
 
-  runWorkflow(DeploymentType.Development, currentBranch, { environment });
+  runWorkflow(DeploymentType.Development, branch, { environment });
   echo();
   echo(`> ${green}${toFirstUpperCase(environment)} ${noColor}환경 배포를 시작합니다.`);
-  echo(`> 배포 브랜치: ${green}${currentBranch}`);
+  echo(`> 배포 브랜치: ${green}${branch}`);
   return;
 })();
