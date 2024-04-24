@@ -25,9 +25,9 @@ enum DeploymentType {
 type Version = (typeof versionList)[number];
 
 // eslint-disable-next-line no-console
-const echo = console.log;
-const green = '\x1b[32m';
-const noColor = '\x1b[0m';
+const echo = (str?: string) => console.log(str ? `> ${str}` : '');
+const green = (str: string) => `\x1b[32m${str}`;
+const noColor = (str: string) => `\x1b[0m${str}`;
 const execute = promisify(exec);
 const toFirstUpperCase = (str: string) => str.replace(/^\S/, ($1) => $1.toUpperCase());
 const getBranchName = async () => {
