@@ -1,4 +1,4 @@
-import { exec, spawnSync } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 import inquirer from 'inquirer';
 import inquirerSearchList from 'inquirer-search-list';
@@ -41,9 +41,7 @@ const getBranchList = async () => {
 const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs: { [key: string]: string | number }) => {
   echo();
   const inputArray = Object.entries(inputs).flatMap(([key, value]) => ['-f', `${key}=${value}`]);
-  return spawnSync('gh', ['workflow', 'run', `Deployment to ${deploymentTarget}`, '--ref', branch, ...inputArray], {
-    stdio: 'inherit',
-  });
+  return execute(`gh workflow run "Deployment to ${deploymentTarget}" --ref ${branch} ${inputArray.join(' ')}`);
 };
 
 inquirer.registerPrompt('search-list', inquirerSearchList);
