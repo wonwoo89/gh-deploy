@@ -49,7 +49,7 @@ inquirer.registerPrompt('search-list', inquirerSearchList);
 // main
 (async () => {
   const currentBranch = await getBranchName();
-  echo('> 브랜치 목록 최신화 하는 중...');
+  echo('브랜치 목록 최신화 하는 중...');
   echo();
   await execute('git fetch origin');
   const remoteBranch = await getBranchList();
@@ -82,19 +82,23 @@ inquirer.registerPrompt('search-list', inquirerSearchList);
     },
   ]);
 
-  if (environment === 'production') {
-    if (version) {
-      runWorkflow(DeploymentType.Production, branch, { VERSION: version });
-      echo();
-      echo(`> 프로덕션 ${green}${toFirstUpperCase(version)} ${noColor}업데이트를 시작합니다.`);
-      echo(`> 배포 브랜치: ${green}${branch}`);
-    }
+  if (!branch) {
+    return echo('선택된 브랜치가 없습니다.');
+  }
+
+  echo();
+  if (environment !== 'production') {
+    await runWorkflow(DeploymentType.Development, branch, { environment });
+    echo(`${green(toFirstUpperCase(environment))} ${noColor('환경 배포를 시작합니다.')}`);
+    echo(`배포 브랜치: ${green(branch)}`);
     return;
   }
 
-  runWorkflow(DeploymentType.Development, branch, { environment });
-  echo();
-  echo(`> ${green}${toFirstUpperCase(environment)} ${noColor}환경 배포를 시작합니다.`);
-  echo(`> 배포 브랜치: ${green}${branch}`);
-  return;
+  if (!version) {
+    return echo('선택된 버전이 없습니다.');
+  }
+
+  await runWorkflow(DeploymentType.Production, branch, { VERSION: version });
+  echo(`프로덕션 ${green(toFirstUpperCase(version))} ${noColor('업데이트를 시작합니다.')}`);
+  echo(`배포 브랜치: ${green(branch)}`);
 })();
