@@ -23,6 +23,7 @@
     "typescript": "^5.1.3"
   },
   "scripts": {
+    "setup": "pnpm i && chmod +x install.sh && ./install.sh",
     "build": "npx swc index.ts -d dist"
   },
   "type": "module"

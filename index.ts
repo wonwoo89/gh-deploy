@@ -2,22 +2,35 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import inquirer from 'inquirer';
 import inquirerSearchList from 'inquirer-search-list';
+import * as path from "node:path";
+import * as fs from "node:fs";
 
-const environmentList = [
+const targetEnvKey = 'DEPLOYMENT_ENV_LIST';
+const parseEnv = (path: string) => {
+  const env = fs.readFileSync(path, 'utf-8').split('\n').filter((path) => path.startsWith(targetEnvKey));
+  if (!env.length) return null;
+  const [, deploymentEnvironmentList] = env[0].split('=');
+  return deploymentEnvironmentList.split(',');
+}
+const getDeploymentEnvironments = () => {
+  const executionDir = process.cwd();
+  const envLocalPath = path.resolve(executionDir, '.env.local');
+  if (fs.existsSync(envLocalPath)) return parseEnv(envLocalPath);
+
+  const envDevPath = path.resolve(executionDir, '.env.development');
+  if (fs.existsSync(envDevPath)) return parseEnv(envDevPath);
+
+  console.error(`파일을 찾을 수 없습니다`);
+  return null;
+};
+
+const platformEnvironmentList = [
   'production',
   'staging',
-  'test-1',
-  'test-2',
-  'test-3',
-  'test-4',
-  'test-tm',
-  'test-seo',
-  'qa',
-  'design',
+  'test',
 ] as const;
 const versionList = ['major', 'minor', 'patch'] as const;
 
-type EnvironmentType = (typeof environmentList)[number];
 enum DeploymentType {
   Production = 'production',
   Development = 'development',
@@ -38,9 +51,9 @@ const getBranchList = async () => {
   const { stdout } = await execute('git branch -r');
   return stdout.split('\n').map((b) => b.trim().replace('origin/', ''));
 }
-const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs: { [key: string]: string | number }) => {
+const runWorkflow = (deploymentTarget: DeploymentType, branch: string, inputs?: { [key: string]: string | number }) => {
   echo();
-  const inputArray = Object.entries(inputs).flatMap(([key, value]) => ['-f', `${key}=${value}`]);
+  const inputArray = inputs ? Object.entries(inputs).flatMap(([key, value]) => ['-f', `${key}=${value}`]) : [];
   return execute(`gh workflow run "Deployment to ${deploymentTarget}" --ref ${branch} ${inputArray.join(' ')}`);
 };
 
@@ -49,21 +62,32 @@ inquirer.registerPrompt('search-list', inquirerSearchList);
 // main
 (async () => {
   const currentBranch = await getBranchName();
+  const { stdout } = await execute('pwd');
+  const isPlatformProject = stdout.includes('platform');
+
+  const env = getDeploymentEnvironments();
+  if (!env) {
+    return echo('환경 변수를 불러오지 못했습니다.');
+  }
+
+  const environmentList = ['production', 'staging', ...env];
+
   echo('브랜치 목록 최신화 하는 중...');
   echo();
   await execute('git fetch origin');
   const remoteBranch = await getBranchList();
 
   const { environment, version, branch } = await inquirer.prompt<{
-    environment: EnvironmentType;
+    environment: string;
     version?: Version;
     branch: string;
   }>([
     {
-      type: 'list',
+      type: 'search-list',
       name: 'environment',
-      message: '환경을 선택해주세요.',
-      choices: environmentList,
+      message: '환경을 선택해주세요.(검색 가능)',
+      default: 'staging',
+      choices: isPlatformProject ? platformEnvironmentList : environmentList,
     },
     {
       type: 'list',
@@ -71,7 +95,7 @@ inquirer.registerPrompt('search-list', inquirerSearchList);
       message: '버전을 선택해주세요.',
       default: 'patch' as Version,
       choices: versionList,
-      when: ({ environment }: { environment: EnvironmentType }) => environment === 'production',
+      when: ({ environment }: { environment: string }) => environment === 'production',
     },
     {
       type: 'search-list',
@@ -88,7 +112,11 @@ inquirer.registerPrompt('search-list', inquirerSearchList);
 
   echo();
   if (environment !== 'production') {
-    await runWorkflow(DeploymentType.Development, branch, { environment });
+    if (isPlatformProject) {
+      await runWorkflow(environment as DeploymentType, branch);
+    } else {
+      await runWorkflow(DeploymentType.Development, branch, { environment });
+    }
     echo(`${green(toFirstUpperCase(environment))} ${noColor('환경 배포를 시작합니다.')}`);
     echo(`배포 브랜치: ${green(branch)}`);
     return;
