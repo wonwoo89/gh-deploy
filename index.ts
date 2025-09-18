@@ -7,7 +7,7 @@ import * as fs from "node:fs";
 
 const targetEnvKey = 'DEPLOYMENT_ENV_LIST';
 const parseEnv = (path: string) => {
-  const env = fs.readFileSync(path, 'utf-8').split('\n').filter((path) => path.startsWith(targetEnvKey));
+  const env = fs.readFileSync(path, 'utf-8').replace(/\\\n/gi, '').split('\n').filter((path) => path.startsWith(targetEnvKey));
   if (!env.length) return null;
   const [, deploymentEnvironmentList] = env[0].split('=');
   return deploymentEnvironmentList.split(',');
@@ -67,7 +67,7 @@ inquirer.registerPrompt('search-list', inquirerSearchList);
 
   const env = getDeploymentEnvironments();
   if (!env) {
-    return echo('환경 변수를 불러오지 못했습니다.');
+    return echo(`환경 변수를 불러오지 못했습니다. ${targetEnvKey}를 확인해주세요.`);
   }
 
   const environmentList = ['production', 'staging', ...env];
